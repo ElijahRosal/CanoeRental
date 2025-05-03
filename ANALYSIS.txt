@@ -1,0 +1,8 @@
+This program uses Floyd's algorithm to compute the shortest canoe rental costs 
+between all pairs of posts along the river by applying a dynamic programming approach. 
+The core recursive formula updates the minimum cost between any two posts 
+i and j by checking if going through an intermediate post k provides a cheaper path: 
+D[i][j]=min(D[i][j], D[i][k] + D[k][j]). 
+This is implemented with a triple nested loop, resulting in a time complexity of O(n^3) 
+and a space complexity of O(n^2), where n is the number of posts. 
+The algorithm updates the cost matrix in place and uses a separate matrix to reconstruct the optimal path.
