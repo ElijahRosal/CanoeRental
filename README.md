@@ -18,6 +18,6 @@ javac Prog3.java
 ```bash
 java Prog3
 ```
-It will then prompt you for the file name liek so:
+It will then prompt you for the file name like so:
 ```bash
 Enter input filename: <your_input_file_name>
