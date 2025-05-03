@@ -97,7 +97,6 @@ public class Prog3 {
         }
     }
     
-
     /**
      * Method: printCostMatrix
      * Purpose: Prints the optimal cost matrix.
