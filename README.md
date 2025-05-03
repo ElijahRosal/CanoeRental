@@ -16,8 +16,4 @@ javac Prog3.java
 ```
 ## How to Run
 ```bash
-java Prog3
-```
-It will then prompt you for the file name like so:
-```bash
-Enter input filename: <your_input_file_name>
+java Prog3 <your_input_file_name>

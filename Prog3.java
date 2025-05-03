@@ -1,139 +1,142 @@
 /**************************************************************/
 /* Elijah Rosal                                               */
-/* Login ID: 017203992                                        */
+/* Student ID: 017203992                                      */
 /* CS 3310, Spring 2025                                       */
-/* Programming Assignment 3                                   */
-/* Prog3 class: Determines the optimal cost and sequence of   */
-/* canoe rentals using dynamic programming.                   */
+/* Programming Assignment 1                                   */
+/* CanoeTripPlanner: This program computes the optimal canoe  */
+/* rental costs and paths along the Los Angeles River using   */
+/* Floyd's algorithm.                                         */
 /**************************************************************/
 
 import java.io.*;
 import java.util.*;
 
 public class Prog3 {
-    public static void main(String[] args) throws IOException {
-        try (Scanner sc = new Scanner(System.in)) {
-            System.out.print("Enter input filename: ");
-            String fileName = sc.nextLine();
+    static final int INF = Integer.MAX_VALUE / 2; // A constant to represent infinite cost
 
-            int n;
-            int[][] cost;
+    /**
+     * Method: main
+     * Purpose: Reads the input file, computes the optimal rental costs 
+     *          using Floyd's algorithm, and prints the optimal cost matrix
+     *          and the optimal path from post 0 to n-1.
+     * Parameters:
+     *   String[] args: The command line arguments, where the first argument 
+     *                  is the file name containing the cost matrix data.
+     * Returns: void
+     */
+    public static void main(String[] args) {
+        if (args.length != 1) {
+            System.err.println("Usage: java Prog3 <filename>");
+            return;
+        }
 
-            // Read input file
-            try (Scanner fileScanner = new Scanner(new File(fileName))) {
-                n = Integer.parseInt(fileScanner.nextLine().trim());
-                cost = new int[n][n];
+        try (Scanner scanner = new Scanner(new File(args[0]))) {
+            int n = Integer.parseInt(scanner.nextLine().trim());
+            int[][] cost = new int[n][n];
+            int[][] next = new int[n][n];
 
-                // Initialize cost matrix with "infinity" values
-                for (int[] row : cost)
-                    Arrays.fill(row, Integer.MAX_VALUE);
-
-                // Read cost matrix from file (upper triangular entries only)
-                for (int i = 0; i < n - 1; i++) {
-                    String[] tokens = fileScanner.nextLine().trim().split("\\s+");
-                    for (int j = i + 1; j < n; j++) {
-                        cost[i][j] = Integer.parseInt(tokens[j - i - 1]);
-                    }
+            // Initialize the cost and next arrays
+            for (int i = 0; i < n; i++) {
+                Arrays.fill(cost[i], INF);
+                cost[i][i] = 0;
+                for (int j = 0; j < n; j++) {
+                    next[i][j] = -1;
                 }
             }
 
-            // Compute all-pairs optimal cost matrix
-            int[][] optimalCost = computeAllPairOptimalCosts(cost);
+            // Read in the upper triangle of the cost matrix
+            for (int i = 0; i < n - 1; i++) {
+                String[] tokens = scanner.nextLine().trim().split("\\s+");
+                for (int j = 0; j < tokens.length; j++) {
+                    int dest = i + j + 1;
+                    cost[i][dest] = Integer.parseInt(tokens[j]);
+                    next[i][dest] = dest;
+                }
+            }
 
-            // Print optimal cost matrix
-            System.out.println("\nOptimal Cost Matrix:");
+            // Apply Floyd's algorithm to find the shortest paths
+            floydWarshall(n, cost, next);
+
+            // Print the optimal cost matrix
+            printCostMatrix(n, cost);
+
+            // Print the optimal path from 0 to n-1
+            System.out.println("\nOptimal Path from 0 to " + (n - 1) + ":");
+            printPath(0, n - 1, next);
+            System.out.println("\nTotal Cost: " + cost[0][n - 1]);
+
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found: " + args[0]);
+        }
+    }
+
+    /**
+     * Method: floydWarshall
+     * Purpose: Apply Floyd's algorithm to find the shortest paths between 
+     *          all pairs of posts.
+     * Parameters:
+     *   int n: The number of posts along the river.
+     *   int[][] cost: The cost matrix representing the canoe rental costs.
+     *   int[][] next: A matrix used to reconstruct the paths.
+     * Returns: void
+     */
+    static void floydWarshall(int n, int[][] cost, int[][] next) {
+        for (int k = 0; k < n; k++) {
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
-                    if (i < j) {
-                        String out = (optimalCost[i][j] == Integer.MAX_VALUE) ? "-" : String.valueOf(optimalCost[i][j]);
-                        System.out.printf("%4s", out);
-                    } else {
-                        System.out.printf("%4s", "-");
+                    // Check if there is a valid path from i to k and k to j
+                    if (cost[i][k] != INF && cost[k][j] != INF) {
+                        int newCost = cost[i][k] + cost[k][j];
+                        if (newCost < cost[i][j]) {
+                            cost[i][j] = newCost;
+                            next[i][j] = next[i][k]; // Update next to reflect the path via k
+                        }
                     }
                 }
-                System.out.println();
             }
+        }
+    }
+    
 
-            // Get path from 0 to n-1
-            List<Integer> path = getOptimalPath(cost, n);
-
-            // Print optimal rental path from 0 to n-1
-            System.out.println("\nOptimal rental path from post 0 to post " + (n - 1) + ":");
-            for (int i = 0; i < path.size() - 1; i++) {
-                System.out.println("Rent canoe from post " + path.get(i) + " to post " + path.get(i + 1));
+    /**
+     * Method: printCostMatrix
+     * Purpose: Prints the optimal cost matrix.
+     * Parameters:
+     *   int n: The number of posts.
+     *   int[][] cost: The computed optimal cost matrix.
+     * Returns: void
+     */
+    static void printCostMatrix(int n, int[][] cost) {
+        System.out.println("Optimal Cost Matrix:");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i < j)
+                    System.out.print((cost[i][j] == INF ? "INF" : cost[i][j]) + "\t");
+                else
+                    System.out.print("-\t");
             }
-            System.out.println("Total cost: " + optimalCost[0][n - 1]);
-        } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
+            System.out.println();
         }
     }
 
-    /**************************************************************/
-    /* Method: computeAllPairOptimalCosts                         */
-    /* Purpose: Compute the minimum cost between all (i, j)       */
-    /* Parameters:                                                */
-    /* int[][] cost: direct rental cost matrix                    */
-    /* Returns: int[][] - optimal cost matrix                     */
-    /**************************************************************/
-    private static int[][] computeAllPairOptimalCosts(int[][] cost) {
-        int n = cost.length;
-        int[][] dp = new int[n][n];
-
-        // Initialize dp matrix with "infinity"
-        for (int i = 0; i < n; i++) {
-            Arrays.fill(dp[i], Integer.MAX_VALUE);
-            dp[i][i] = 0;
+    /**
+     * Method: printPath
+     * Purpose: Prints the optimal path from post u to post v.
+     * Parameters:
+     *   int u: The start post.
+     *   int v: The destination post.
+     *   int[][] next: The matrix used to reconstruct the path.
+     * Returns: void
+     */
+    static void printPath(int u, int v, int[][] next) {
+        if (next[u][v] == -1) {
+            System.out.print("No path");
+            return;
         }
-
-        // Compute all-pairs optimal costs
-        for (int i = 0; i < n; i++) {
-            for (int j = i + 1; j < n; j++) {
-                for (int k = i; k < j; k++) {
-                    if (cost[k][j] != Integer.MAX_VALUE && dp[i][k] != Integer.MAX_VALUE) {
-                        dp[i][j] = Math.min(dp[i][j], dp[i][k] + cost[k][j]);
-                    }
-                }
-                // Direct cost if no better path is found
-                if (cost[i][j] != Integer.MAX_VALUE) {
-                    dp[i][j] = Math.min(dp[i][j], cost[i][j]);
-                }
-            }
+        System.out.print(u);
+        while (u != v) {
+            u = next[u][v];
+            System.out.print(" -> " + u);
         }
-
-        return dp;
-    }
-
-    /**************************************************************/
-    /* Method: getOptimalPath                                     */
-    /* Purpose: Reconstruct optimal path from post 0 to n-1       */
-    /* Parameters:                                                */
-    /* int[][] cost: original cost matrix                         */
-    /* int n: number of posts                                     */
-    /* Returns: List<Integer>: list of post indices in path       */
-    /**************************************************************/
-    private static List<Integer> getOptimalPath(int[][] cost, int n) {
-        int[] minCost = new int[n];
-        int[] prev = new int[n];
-
-        Arrays.fill(minCost, Integer.MAX_VALUE);
-        minCost[0] = 0;
-        prev[0] = -1;
-
-        for (int i = 0; i < n; i++) {
-            for (int j = i + 1; j < n; j++) {
-                if (cost[i][j] != Integer.MAX_VALUE && minCost[i] + cost[i][j] < minCost[j]) {
-                    minCost[j] = minCost[i] + cost[i][j];
-                    prev[j] = i;
-                }
-            }
-        }
-
-        // Backtrack to construct path
-        List<Integer> path = new ArrayList<>();
-        for (int at = n - 1; at != -1; at = prev[at]) {
-            path.add(at);
-        }
-        Collections.reverse(path);
-        return path;
     }
 }
